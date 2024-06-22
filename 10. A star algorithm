@@ -1,0 +1,67 @@
+import heapq
+from itertools import combinations
+
+# Define the distance matrix
+distance_matrix = [
+    [0, 10, 15, 20],
+    [10, 0, 35, 25],
+    [15, 35, 0, 30],
+    [20, 25, 30, 0]
+]
+
+# Number of cities
+num_cities = len(distance_matrix)
+
+# Helper function to calculate the MST cost using Prim's algorithm
+def prim_mst_cost(remaining_cities, distance_matrix):
+    if not remaining_cities:
+        return 0
+    
+    mst_cost = 0
+    visited = set()
+    edges = [(0, remaining_cities[0])]  # (cost, node)
+    
+    while edges:
+        cost, node = heapq.heappop(edges)
+        if node not in visited:
+            visited.add(node)
+            mst_cost += cost
+            for neighbor in remaining_cities:
+                if neighbor not in visited:
+                    heapq.heappush(edges, (distance_matrix[node][neighbor], neighbor))
+    
+    return mst_cost
+
+# A* algorithm for TSP
+def a_star_tsp(distance_matrix):
+    start = 0
+    queue = [(0, start, [start], set([start]))]  # (cost, current_node, path, visited)
+    min_cost = float('inf')
+    best_path = None
+    
+    while queue:
+        cost, current_node, path, visited = heapq.heappop(queue)
+        
+        if len(path) == num_cities:
+            complete_cost = cost + distance_matrix[current_node][start]
+            if complete_cost < min_cost:
+                min_cost = complete_cost
+                best_path = path
+            continue
+        
+        remaining_cities = [city for city in range(num_cities) if city not in visited]
+        mst_cost = prim_mst_cost(remaining_cities, distance_matrix)
+        
+        for next_node in remaining_cities:
+            next_cost = cost + distance_matrix[current_node][next_node]
+            new_path = path + [next_node]
+            new_visited = visited | set([next_node])
+            estimated_cost = next_cost + mst_cost
+            heapq.heappush(queue, (estimated_cost, next_node, new_path, new_visited))
+    
+    return best_path, min_cost
+
+# Execute the A* algorithm for TSP
+best_path, min_cost = a_star_tsp(distance_matrix)
+print("Best tour:", best_path)
+print("Minimum distance:", min_cost)
